@@ -1,0 +1,50 @@
+name: Build Run
+
+on:
+  workflow_call:
+
+jobs:
+  infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4  # Checks out code from repository
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Infrastructure Validations
+        run: make run-infrastructure-validations
+
+      - name: Infrastructure Unit Tests
+        run: make run-infrastructure-tests
+
+      - name: Infrastructure Coverage
+        run: make run-infrastructure-coverage
+
+  software:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4  # Checks out code from repository
+
+      - name: Software Validations
+        run: make run-software-validations
+
+      - name: Software Unit Tests
+        run: make run-software-tests
+
+      - name: Software Coverage
+        run: make run-software-coverage
+
+#  e2e-tests:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4  # Checks out code from repository
+#
+#      - name: E2E Tests
+#        run: make create-e2e-tests-env
+#

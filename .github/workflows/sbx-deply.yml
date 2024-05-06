@@ -1,0 +1,24 @@
+name: Sandbox Deploy
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/workflow-cdk-build.yml
+
+  deploy:
+    needs: build
+    uses: ./.github/workflows/workflow-cdk-deploy.yml
+    with:
+      ACCOUNT_NAME: anson-sandbox
+      ACCOUNT_NUMBER: 637423657069
+      ENV_NAME: sbx
+      REGION: us-east-1
+      STAGE_TYPE: primary
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

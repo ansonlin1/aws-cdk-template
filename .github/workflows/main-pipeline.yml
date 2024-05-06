@@ -1,0 +1,16 @@
+name: Main CI
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+  id-token: write
+  checks: write
+  actions: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/workflow-cdk-build.yml

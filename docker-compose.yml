@@ -1,0 +1,8 @@
+version: '3'
+services:
+  docker-aws-scripts:
+    build:
+      context: .
+    volumes:
+      - ".:/work"
+      - "~/.m2:/var/lib/m2"

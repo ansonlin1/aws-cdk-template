@@ -1,0 +1,88 @@
+name: Deploy Run
+
+on:
+  workflow_call:
+    inputs:
+      ACCOUNT_NAME:
+        required: true
+        description: Account Name
+        type: string
+      ACCOUNT_NUMBER:
+        required: true
+        description: Account Number
+        type: string
+      ENV_NAME:
+        required: true
+        description: ENV Name
+        type: string
+      REGION:
+        required: true
+        description: Primary Region
+        type: string
+      STAGE_TYPE:
+        required: true
+        description: Stage Type
+        type: string
+      CDK_OUT_PATH:
+        required: false
+        description: CDK Out Path
+        type: string
+        default: infrastructure/cdk.out
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4  # Checks out code from repository
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4  # Configures AWS credentials
+        with:
+          aws-region: ${{ inputs.REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}  # Access Key from GitHub Secrets
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}  # Secret Key from GitHub Secrets
+
+#      - name: Configure AWS Credentials
+#        uses: aws-actions/configure-aws-credentials@v1  # Configures AWS credentials
+#        with:
+#          aws-region: us-east-1
+#          role-to-assume: some-role
+#          role-duration-seconds: 14400
+#          role-skip-session-tagging: true
+
+      - name: Use Node.js 20.0.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.0.0"
+
+      - name: Install CDK
+        run: sudo npm install -g aws-cdk
+
+      - name: Synthesize Templates
+        env:
+          ACCOUNT_NAME: ${{ inputs.ACCOUNT_NAME }}
+          ACCOUNT_NUMBER: ${{ inputs.ACCOUNT_NUMBER }}
+          ENV_NAME: ${{ inputs.ENV_NAME }}
+          REGION: ${{ inputs.REGION }}
+          STAGE_TYPE: ${{ inputs.STAGE_TYPE }}
+          SYNTH: true
+          GITHUB_REPO_NAME: ${{ github.event.repository.name }}
+        run: make cdk-synth
+
+      - name: Save Artifacts with Workflow Run
+        uses: actions/upload-artifact@v4
+        with:
+          name: CfnTemplates-${{ inputs.ACCOUNT_NAME }}-${{ inputs.ENV_NAME }}-${{ inputs.STAGE_TYPE }}
+          path: ${{ inputs.CDK_OUT_PATH }}/assembly-*
+          retention-days: 7
+
+      - name: Deploy CDK Templates
+        env:
+          ACCOUNT_NAME: ${{ inputs.ACCOUNT_NAME }}
+        run: make cdk-deploy arg1=${{ inputs.ENV_NAME }}-${{ inputs.STAGE_TYPE }}
